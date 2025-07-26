@@ -12,6 +12,13 @@ wget https://raw.githubusercontent.com/server-tools/carbonio-letsencrypt/refs/he
 chmod +x cert_cron.sh
 ```
 
+Edit  cert_cron.sh:
+
+```
+nano cert_cron.sh
+```
+
+
 Open Crontab:
 
 ```

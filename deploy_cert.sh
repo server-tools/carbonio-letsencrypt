@@ -15,14 +15,14 @@ TARGET_DIR="${BASE_PATH}/${DOMAIN_NAME}"
 EXACT_DIR="${BASE_PATH}/${DOMAIN_NAME}"
 CERT_DIR_PATTERN="${BASE_PATH}/${DOMAIN_NAME}*"
 
-# Check if the exact directory exists
-if [ -d "$EXACT_DIR" ]; then
-  LATEST_DIR="$EXACT_DIR"
-else
-  # Find the latest certificate directory with the numbered pattern
-  LATEST_DIR=$(ls -d ${CERT_DIR_PATTERN} 2>/dev/null | sort -V | tail -n 1)
-  if [ -z "$LATEST_DIR" ]; then
-    echo "Error: No certificate directories found for ${DOMAIN_NAME}"
+# Check for numbered certificate directories first
+LATEST_DIR=$(ls -d ${CERT_DIR_PATTERN} 2>/dev/null | sort -V | tail -n 1)
+if [ -z "$LATEST_DIR" ]; then
+  # If no numbered directories exist, fall back to the exact directory
+  if [ -d "$EXACT_DIR" ]; then
+    LATEST_DIR="$EXACT_DIR"
+  else
+    echo "Error: No certificate directories found for intranet-${DOMAIN_NAME}"
     exit 1
   fi
 fi

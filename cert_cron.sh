@@ -76,6 +76,10 @@ if [ "$DAYS_LEFT" -le "$DAYS_THRESHOLD" ]; then
     su - zextras -c "/opt/zextras/libexec/zmproxyconfgen"
     su - zextras -c "/opt/zextras/bin/zmproxyctl reload"
 
+    systemctl restart carbonio-ws-collaboration.service
+    systemctl restart carbonio-message-broker.service
+    systemctl restart carbonio-message-dispatcher.service
+
     # Restart Zextras services as zextras user
     echo "Restarting Zextras services..."
     su - zextras -c "zmcontrol restart"

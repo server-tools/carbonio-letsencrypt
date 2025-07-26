@@ -4,7 +4,7 @@ Verify Certificates
 ls /opt/zextras/common/certbot/etc/letsencrypt/
 ```
 
-All in One Cron Generate
+All in One Cron Renew SSL
 ==
 
 ```

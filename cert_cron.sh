@@ -71,6 +71,11 @@ if [ "$DAYS_LEFT" -le "$DAYS_THRESHOLD" ]; then
         exit 1
     fi
 
+    # Restart Zextras Proxy
+    echo "Restarting Zextras Proxy..."
+    su - zextras -c "/opt/zextras/libexec/zmproxyconfgen"
+    su - zextras -c "/opt/zextras/bin/zmproxyctl reload"
+
     # Restart Zextras services as zextras user
     echo "Restarting Zextras services..."
     su - zextras -c "zmcontrol restart"

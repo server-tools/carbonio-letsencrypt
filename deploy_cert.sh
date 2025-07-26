@@ -8,7 +8,6 @@ if [ -z "$1" ]; then
 fi
 
 # Set domain name variable
-DOMAIN_NAME="$1"
 
 DOMAIN_NAME="$1"
 BASE_PATH="/opt/zextras/common/certbot/etc/letsencrypt/live"

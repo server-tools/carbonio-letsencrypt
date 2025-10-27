@@ -168,10 +168,10 @@ if [ "$DAYS_LEFT" -le "$DAYS_THRESHOLD" ]; then
     # Restart Zextras services as zextras user
     echo "Restarting all Zextras services (zmcontrol)..."
     su - zextras -c "zmcontrol restart"
-    if [ $? -ne 0 ]; then
-        echo "Error: zmcontrol restart failed"
-        exit 1
-    fi
+    systemctl restart carbonio-directory-server.target
+    systemctl restart carbonio-appserver.target
+    systemctl restart carbonio-mta.target
+    systemctl restart carbonio-proxy.target
 
     echo "SSL certificate renewed, deployed, and Zextras services restarted successfully."
 

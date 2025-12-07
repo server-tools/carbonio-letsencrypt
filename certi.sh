@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #================================================================
-# Carbonio CE Renewal Script (FIXED PATH LOGIC)
+# Carbonio CE Renewal Script (Restored Proxy Logic)
 # Usage: ./carbonio_renew.sh <domain> <email>
 #================================================================
 
@@ -93,8 +93,6 @@ if [ -d "$TARGET_CERT_DIR" ] && [ -f "$TARGET_CERT_DIR/cert.pem" ]; then
         RUN_CERTBOT=false
     else
         echo "Stored certificate is also old ($STORED_DAYS_LEFT days left). Proceeding with renewal."
-        # If it's old, we treat it as expired. We DO NOT delete it yet; Certbot handles updates in place usually.
-        # But if previous runs corrupted it, we might need the cleanup below.
     fi
 fi
 
@@ -105,14 +103,7 @@ fi
 if [ "$RUN_CERTBOT" = true ]; then
 
     # --- ZOMBIE CLEANUP ---
-    # Only move the folder if it exists but is BROKEN (e.g. missing cert.pem) 
-    # OR if we previously identified it as 'old' and we want to force a clean slate to avoid the "directory exists" error.
-    # However, standard Certbot handles updates fine. The error only happens if the structure is corrupt.
-    # We will be aggressive: if we need to renew, and the dir exists, we check if it's valid.
-    
     if [ -d "$TARGET_CERT_DIR" ]; then
-        # If we are here, it means the cert inside is OLD or MISSING.
-        # To avoid "live directory exists" errors if the lineage is broken, we back it up.
         echo "Backing up existing directory to allow fresh issuance..."
         mv "$TARGET_CERT_DIR" "${TARGET_CERT_DIR}_broken_$(date +%s)"
     fi
@@ -149,8 +140,7 @@ fi
 #================================================
 echo "Preparing SSL files..."
 
-# CRITICAL FIX: After a successful Certbot run, the files ARE in ${LE_BASE_DIR}/${DOMAIN}
-# We do NOT search/sort directories anymore.
+# Force usage of the standard certbot live directory
 CERT_SOURCE_DIR="${LE_BASE_DIR}/${DOMAIN}"
 
 echo "Using certificate source: $CERT_SOURCE_DIR"
@@ -168,7 +158,6 @@ echo "Downloading ISRG Root X1..."
 wget -q https://letsencrypt.org/certs/isrgrootx1.pem -O "$COMMERCIAL_DIR/isrgrootx1.pem"
 
 # Create CA chain
-# Note: usage of -L ensures we follow symlinks if Certbot used them
 cat "$CERT_SOURCE_DIR/chain.pem" "$COMMERCIAL_DIR/isrgrootx1.pem" > "$COMMERCIAL_DIR/zextras_ca.pem"
 
 # Backup existing key
@@ -176,7 +165,7 @@ if [ -f "$COMMERCIAL_DIR/commercial.key" ]; then
     cp "$COMMERCIAL_DIR/commercial.key" "$COMMERCIAL_DIR/commercial.key.bak.$(date +%F)"
 fi
 
-# Copy Private Key (dereferencing symlink)
+# Copy Private Key (dereference symlinks with -L)
 cp -L "$CERT_SOURCE_DIR/privkey.pem" "$COMMERCIAL_DIR/commercial.key"
 
 # Fix Permissions
@@ -221,9 +210,14 @@ fi
 rm -f "$COMMERCIAL_DIR/fullchain_temp.pem"
 
 #================================================
-## 6. Restart Services (Auto-Detect Method)
+## 6. Restart Services
 #================================================
 echo "--- Restarting Services ---"
+
+# RESTORED: Restart Zextras Proxy Configuration
+echo "Regenerating Proxy Config and Reloading..."
+su - zextras -c "/opt/zextras/libexec/zmproxyconfgen"
+su - zextras -c "/opt/zextras/bin/zmproxyctl reload"
 
 if systemctl list-unit-files | grep -q carbonio-directory-server.target; then
     echo "Detected newer Carbonio version (Systemd)."
